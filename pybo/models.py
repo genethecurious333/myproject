@@ -17,11 +17,14 @@ answer_voter = Table(
     db.Column('answer_id', db.Integer, db.ForeignKey('answer.id', ondelete='CASCADE'), primary_key=True)
 )
 
+
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True) # id를 주면 이것이 기본키가 된다는 의미
     subject = db.Column(db.String(200), nullable=False) # nullable=False는 값이 꼭들어가야한다는 의미, 200자까지 작성가능
     content = db.Column(db.Text(), nullable=False)
     create_date = db.Column(db.DateTime(), nullable=False) # 작성 일자
+    # 업로드된 이미지 경로 추가
+    image_path = db.Column(db.String(200), nullable=True)
     # 글쓴이 author 외래키 및 관계 설정 추가 (기존 데이터 고려 nullable=True 우선 허용)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     # user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=True, server_default='1')
@@ -33,7 +36,6 @@ class Question(db.Model):
         backref=db.backref('quesiton_voter_set',    # User 객체에서 추천한 질문 목록을 조회하는 속성
                            lazy='dynamic'           # 실제 조회 시점에 SQL을 실행하여 Query 객체를 반환
                            ))
-
 class Answer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     question_id = db.Column(db.Integer, db.ForeignKey('question.id', ondelete='CASCADE')) # Question이 지워지면 Answer도 delete하라. Answer는 Question과 같은 번호를 가지고 있어야함.
@@ -47,7 +49,7 @@ class Answer(db.Model):
     # 추천인 (다대다 N:N)
     voter = db.relationship('User', secondary=answer_voter, 
                             backref=db.backref('answer_voter_set', lazy='dynamic'))
-
+    
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
@@ -70,3 +72,4 @@ class Comment(db.Model):
 
 # Database(models.py)에서의 수정이 발생했을때는 반드시 flask db migrate와 flask db upgrade를 해준다. 
 # migrate와 upgrade전에 우선 set부터 완료한다. set FLASK_APP=pybo   set FLASK-ENV=development
+

@@ -16,14 +16,23 @@
     <input type="submit" value="답변등록">
 </form> -->
 
-
 {% extends 'base.html' %}
 {% block content %}
 <div class="container my-3">
     <h2 class="border-bottom py-2">{{ question.subject }}</h2>
     <div class="card my-3">
         <div class="card-body">
-            <div class="card-text" style="white-space: pre-line">{{ question.content }}</div>
+            <!-- <div class="card-text" style="white-space: pre-line">{{ question.content }}</div> -->
+            <div class="card-text">{{ question.content | trim | markdown }}</div>
+
+            <!-- 첨부 이미지 (있을때만) -->
+            {% if question.image_path %}
+            <div class="my-3">
+                <img src="{{ url_for('static', filename=question.image_path)}}" alt="첨부 이미지"
+                style="max-width: 100%; height: auto;" class="img-thumnail">
+            </div>
+            {% endif %}
+
             <div class="d-flex justify-content-end">
                 <div class="badge text-bg-light p-2 text-start">
                     <div class="mb-2">
@@ -35,8 +44,7 @@
             </div>
 
             <div class="my-3">
-                <a href="javascript:void(0)"
-                    data-uri="{{ url_for('question.vote', question_id=question.id) }}"
+                <a href="javascript:void(0)" data-uri="{{ url_for('question.vote', question_id=question.id) }}"
                     class="recommend btn btn-sm btn-outline-secondary">추천
                     <span class="badge rounded-pill bg-success">{{ question.voter | length }}</span>
                 </a>
@@ -50,13 +58,17 @@
                 {% endif %}
             </div>
         </div>
-    <!-- </div>
+        <!-- </div>
 
     <div class="card my-3"> -->
+        <!-- 질문의 댓글 -->
         <div class="card-body ps-2">
             {% if question.comment_set | length > 0 %}
             <div class="mt-3">
                 {% for comment in question.comment_set %}
+                <!-- 질문 댓글 앵커 -->
+                <a name="comment_{{ comment.id }}"></a>
+
                 <div class="comment py-2 text-muted small border-top">
                     <span style="white-space: pre-line;">{{ comment.content }}</span>
                     <span>
@@ -85,12 +97,15 @@
             </div>
         </div>
     </div>
-
+    <!-- 답변 -->
     <h5 class="border-bottom my-3 py-2">{{ question.answer_set | length }}개의 답변이 있습니다.</h5>
     {% for answer in question.answer_set %}
+    <!-- 앵커 엘리먼트 -->
+    <a name="answer_{{ answer.id }}"></a>
+
     <div class="card my-3">
         <div class="card-body">
-            <div class="card-text" style="white-space: pre-line">{{ answer.content }}</div>
+            <div class="card-text">{{ answer.content | trim | markdown }}</div>
             <div class="d-flex justify-content-end">
                 <div class="badge text-bg-light p-2 text-start">
                     <div class="mb-2">{{ answer.user.username }}</div>
@@ -98,27 +113,34 @@
                     <div>{{ answer.create_date | datetime }}</div>
                 </div>
             </div>
-            {% if g.user == answer.user %}
-            <div class="my-3">
+            <div class="my-3">  
+                <a href="javascript:void(0)" data-uri="{{ url_for('answer.vote', answer_id=answer.id) }}"
+                    class="recommend btn btn-sm btn-outline-secondary">추천
+                    <span class="badge rounded-pill bg-success">{{ answer.voter | length }}</span>
+                </a>
+                {% if g.user == answer.user %}
                 <a href="{{ url_for('answer.modify', answer_id=answer.id) }}"
                     class="btn btn-sm btn-outline-secondary">수정</a>
                 <a href="javascript:void(0)" data-uri="{{ url_for('answer.delete', answer_id=answer.id) }}"
                     class="delete btn btn-sm btn-outline-secondary">삭제</a>
-            </div>
-            {% endif %}
+                {% endif %}
+            </div>            
         </div>
-    <!-- </div>  -->
+        <!-- </div>  -->
 
-    <!-- 답변댓글 기능 추가 -->
-    <!-- <div class="card my-3"> -->
+        <!-- 답변댓글 기능 추가 -->
+        <!-- <div class="card my-3"> -->
         <div class="card-body ps-2">
             {% if answer.comment_set | length > 0 %}
             <div class="mt-3">
-            {% for comment in answer.comment_set %}
+                {% for comment in answer.comment_set %}
+                <!-- 답변 댓글 앵커 -->
+                <a name="comment_{{ comment.id }}"></a>
+
                 <div class="comment py-2 text-muted small border-top">
                     <span style="white-space: pre-line;">{{ comment.content }}</span>
                     <span>
-                        - <strong>{{ comment.user.username}}</strong>, {{ comment.create_data | datetime }}
+                        - <strong>{{ comment.user.username}}</strong>, {{ comment.create_date | datetime }}
                         {% if comment.modify_date %}
                         (수정:{{ comment.modify_date | datetime }})
                         {% endif %}
@@ -130,47 +152,47 @@
                         class="delete small">삭제</a>
                     {% endif %}
                 </div>
-            {% endfor %}
+                {% endfor %}
             </div>
             {% endif %}
             <div>
-            <a href="{{ url_for('comment.create_answer', answer_id=answer.id) }}" class="small"><small>댓글
-                    추가..</small></a>
+                <a href="{{ url_for('comment.create_answer', answer_id=answer.id) }}" class="small"><small>댓글
+                        추가..</small></a>
             </div>
         </div>
     </div>
     {% endfor %}
 
     <form action="{{ url_for('answer.create', question_id=question.id) }}" method="post" class="my-3">
-    {{ form.csrf_token }}
+        {{ form.csrf_token }}
 
-    {% if form.errors %}
-    <div class="alert alert-danger" role="alert">
-        {% for field, errors in form.errors.items() %}
-        <strong>{{ form[field].label }}</strong>
-        <ul>
-            {% for error in errors %}
-            <li>{{ error }}</li>
+        {% if form.errors %}
+        <div class="alert alert-danger" role="alert">
+            {% for field, errors in form.errors.items() %}
+            <strong>{{ form[field].label }}</strong>
+            <ul>
+                {% for error in errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
             {% endfor %}
-        </ul>
-        {% endfor %}
-    </div>
-    {% endif %}
-    <!-- post는 데이터를 header에 담아서 간다 -->
-    <div class="mb-3">
-        <textarea name="content" id="content" rows="10" class="form-control" {% if not g.user %}disabled{% endif
-            %}></textarea>
-    </div>
-    <input type="submit" value="답변등록" class="btn btn-primary">
-</form>
+        </div>
+        {% endif %}
+        <!-- post는 데이터를 header에 담아서 간다 -->
+        <div class="mb-3">
+            <textarea name="content" id="content" rows="10" class="form-control" {% if not g.user %}disabled{% endif
+                %}></textarea>
+        </div>
+        <input type="submit" value="답변등록" class="btn btn-primary">
+    </form>
 </div>
 {% endblock %}
 
 {% block script %}
 <script>
     const recommend_elements = document.getElementsByClassName('recommend');
-    Array.from(recommend_elements).forEach(function(element){
-        element.addEventListener('click', function(){
+    Array.from(recommend_elements).forEach(function (element) {
+        element.addEventListener('click', function () {
             if (confirm("정말로 추천하시겠습니까?")) {
                 location.href = this.dataset.uri;
             };
