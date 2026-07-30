@@ -92,37 +92,63 @@ def create():
         # print('root_path :', current_app.root_path)
         # print('=' * 50)
 
-        # 폼에서 전송된 이미지 파일
-        image_file = form.image.data
-        image_path = None
+        # 폼에서 전송된 이미지 파일 (다중 이미지 업로드)
+        image_files = form.image.data
+        image_paths = []
+        # 1개 이미지 업로드
+        # image_file = form.image.data
+        # image_path = None
+        
 
-        if image_file:
-            # 저장 경로 : 오늘 날짜로 폴더 생성
-            today = datetime.now().strftime('%Y%m%d')
-            upload_folder = os.path.join(current_app.root_path, 'static/photo', today)
-            os.makedirs(upload_folder, exist_ok=True)
+        # if image_file:
+        #     # 저장 경로 : 오늘 날짜로 폴더 생성
+        #     today = datetime.now().strftime('%Y%m%d')
+        #     upload_folder = os.path.join(current_app.root_path, 'static/photo', today)
+        #     os.makedirs(upload_folder, exist_ok=True)
 
-            # 파일 저장
-            # secure_filename() : 사용자가 업로드한 파일명을 운명체제에 안전하게 사용할 수 있는 형태로 반환하여, 경로 조작(Path Traversal) 등의 보안 위험을 줄여주는 함수
-            filename = secure_filename(image_file.filename)
-            #출력해서 만들어진 파일이름을 확인합니다.
-            print('filename ====>', filename)
+        #     # 파일 저장
+        #     # secure_filename() : 사용자가 업로드한 파일명을 운명체제에 안전하게 사용할 수 있는 형태로 반환하여, 경로 조작(Path Traversal) 등의 보안 위험을 줄여주는 함수
+        #     filename = secure_filename(image_file.filename)
+        #     #출력해서 만들어진 파일이름을 확인합니다.
+        #     print('filename ====>', filename)
 
-            ext = os.path.splitext(image_file.filename)[1]
-            filename = f'{uuid.uuid4()}{ext}'
+        #     ext = os.path.splitext(image_file.filename)[1]
+        #     filename = f'{uuid.uuid4()}{ext}'
 
-            file_path = os.path.join(upload_folder, filename)
-            image_file.save(file_path)
+        #     file_path = os.path.join(upload_folder, filename)
+        #     image_file.save(file_path)
 
-            # DB에 저장할 경로 (static 기준 상대경로)
-            image_path = f'photo/{today}/{filename}'
+        #     # DB에 저장할 경로 (static 기준 상대경로)
+        #     image_path = f'photo/{today}/{filename}'
 
+        # 저장 경로 : 오늘 날짜로 폴더 설정
+        today = datetime.now().strftime('%Y%m%d')
+        upload_folder = os.path.join(current_app.root_path, 'static/photo', today)
+        os.makedirs(upload_folder, exist_ok=True)
+
+        if image_files:
+            for image_file in image_files:
+                # 파일이 실제로 비어있지 않은지 확인
+                if image_file and image_file.filename != '':
+                    ext = os.path.splitext(image_file.filename)[1]
+                    filename = f'{uuid.uuid4()}{ext}'
+                    # filename = secure_filename(image_file.filename)
+                    file_path = os.path.join(upload_folder, filename)
+                    image_file.save(file_path)
+
+                    # DB용 상대 경로 리스트에 추가
+                    image_paths.append(f'photo/{today}/{filename}')
+        # 여러 경로를 하나의 문자열로 합침 (예 : "path1, path2")
+        # DB의 image_path column의 여러 경로를 담을 수 있을 만큼 길어야 한다
+        joined_image_paths = ",".join(image_paths) if image_paths else None
+        # ----
 
         question = Question(subject=form.subject.data, 
                             content=form.content.data, 
                             create_date=datetime.now(), 
                             user=g.user,
-                            image_path=image_path)
+                            image_path=joined_image_paths)
+                            # image_path=image_path)
         db.session.add(question)
         db.session.commit()
         return redirect(url_for('question._list'))

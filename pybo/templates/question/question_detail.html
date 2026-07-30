@@ -25,12 +25,22 @@
             <!-- <div class="card-text" style="white-space: pre-line">{{ question.content }}</div> -->
             <div class="card-text">{{ question.content | trim | markdown }}</div>
 
-            <!-- 첨부 이미지 (있을때만) -->
-            {% if question.image_path %}
+            <!-- 첨부 이미지 (1개 있을때만) -->
+            <!-- {% if question.image_path %}
             <div class="my-3">
                 <img src="{{ url_for('static', filename=question.image_path)}}" alt="첨부 이미지"
                 style="max-width: 100%; height: auto;" class="img-thumnail">
             </div>
+            {% endif %} -->
+
+            <!-- 첨부 이미지 여러개 처리 -->
+            {% if question.image_path %}
+                {% for path in question.image_path.split(',') %}
+                <div class="my-3">
+                    <img src="{{ url_for('static', filename=path)}}" alt="첨부 이미지"
+                    style="max-width: 100%; height: auto;" class="img-thumnail">
+                </div>
+                {% endfor %}
             {% endif %}
 
             <div class="d-flex justify-content-end">

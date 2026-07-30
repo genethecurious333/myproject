@@ -26,10 +26,14 @@
             <label for="content" class="form-label">내용</label>
             <textarea class="form-control" id="content" name="content" rows="10">{{ form.content.data or ''}}</textarea>
         </div>
-        {{ form.image.label }}
-        {{ form.image(class='form-control') }}
-        <p>
-        <button class="btn btn-primary" type="submit">저장하기</button>
+        <div class="mb-3">
+            {{ form.image.label }}
+            {{ form.image(class='form-control', multiple=True, accept="image/*") }}
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+        <!-- {{ form.image(class='form-control') }} -->
+        <!-- <p>
+        <button class="btn btn-primary" type="submit">저장하기</button> -->
     </form>
 </div>
 {% endblock %}

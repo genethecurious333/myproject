@@ -24,7 +24,8 @@ class Question(db.Model):
     content = db.Column(db.Text(), nullable=False)
     create_date = db.Column(db.DateTime(), nullable=False) # 작성 일자
     # 업로드된 이미지 경로 추가
-    image_path = db.Column(db.String(200), nullable=True)
+    # image_path = db.Column(db.String(200), nullable=True) # 1개
+    image_path = db.Column(db.Text(), nullable=True) # 여러개 이미지 처리
     # 글쓴이 author 외래키 및 관계 설정 추가 (기존 데이터 고려 nullable=True 우선 허용)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     # user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=True, server_default='1')
